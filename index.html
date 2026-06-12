@@ -1,0 +1,1038 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>내 독서 아카이브</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@300;400;600&family=Noto+Sans+KR:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #F7F5F0;
+    --surface: #FFFFFF;
+    --text-primary: #1A1814;
+    --text-secondary: #6B6760;
+    --text-muted: #A8A49F;
+    --accent: #3D5A3E;
+    --accent-light: #EBF0EB;
+    --accent-warm: #8B5E3C;
+    --accent-warm-light: #F5EDE5;
+    --border: #E8E4DC;
+    --border-strong: #C8C3BA;
+    --reread: #3D5A3E;
+    --radius: 12px;
+    --radius-sm: 6px;
+  }
+
+  body {
+    font-family: 'Noto Sans KR', sans-serif;
+    background: var(--bg);
+    color: var(--text-primary);
+    min-height: 100vh;
+  }
+
+  header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 2rem 2.5rem 1.5rem;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .header-top {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    margin-bottom: 1.25rem;
+  }
+
+  .site-title {
+    font-family: 'Noto Serif KR', serif;
+    font-size: 1.5rem;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    color: var(--text-primary);
+  }
+
+  .site-subtitle {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    margin-top: 2px;
+    font-weight: 300;
+  }
+
+  .header-stats {
+    display: flex;
+    gap: 1.5rem;
+    align-items: flex-end;
+  }
+
+  .stat {
+    text-align: right;
+  }
+
+  .stat-num {
+    font-family: 'Noto Serif KR', serif;
+    font-size: 1.4rem;
+    font-weight: 600;
+    color: var(--accent);
+    line-height: 1;
+  }
+
+  .stat-label {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    margin-top: 2px;
+  }
+
+  .controls {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  .filter-group {
+    display: flex;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+  }
+
+  .filter-btn {
+    font-family: 'Noto Sans KR', sans-serif;
+    font-size: 0.75rem;
+    font-weight: 400;
+    padding: 5px 14px;
+    border: 1px solid var(--border-strong);
+    border-radius: 20px;
+    background: transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .filter-btn.active, .filter-btn:hover {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: white;
+  }
+
+  .search-box {
+    font-family: 'Noto Sans KR', sans-serif;
+    font-size: 0.8rem;
+    padding: 6px 14px;
+    border: 1px solid var(--border-strong);
+    border-radius: 20px;
+    background: var(--bg);
+    color: var(--text-primary);
+    outline: none;
+    width: 180px;
+    transition: border-color 0.15s;
+  }
+
+  .search-box:focus { border-color: var(--accent); }
+
+  .add-btn {
+    font-family: 'Noto Sans KR', sans-serif;
+    font-size: 0.78rem;
+    font-weight: 500;
+    padding: 6px 16px;
+    border: 1.5px solid var(--accent);
+    border-radius: 20px;
+    background: transparent;
+    color: var(--accent);
+    cursor: pointer;
+    margin-left: auto;
+    transition: all 0.15s;
+  }
+
+  .add-btn:hover { background: var(--accent); color: white; }
+
+  main {
+    padding: 2rem 2.5rem;
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 1.25rem;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
+    position: relative;
+  }
+
+  .card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+  }
+
+  .card-cover {
+    width: 100%;
+    aspect-ratio: 3/4;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .cover-text {
+    font-family: 'Noto Serif KR', serif;
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: white;
+    text-align: center;
+    padding: 1.5rem 1.25rem;
+    line-height: 1.5;
+    z-index: 1;
+  }
+
+  .cover-author {
+    font-family: 'Noto Sans KR', sans-serif;
+    font-size: 0.72rem;
+    font-weight: 300;
+    color: rgba(255,255,255,0.8);
+    margin-top: 0.5rem;
+  }
+
+  .cover-overlay {
+    position: absolute; inset: 0;
+    background: rgba(0,0,0,0.18);
+    z-index: 0;
+  }
+
+  .reread-badge {
+    position: absolute;
+    top: 10px; right: 10px;
+    background: rgba(255,255,255,0.92);
+    color: var(--reread);
+    font-size: 0.65rem;
+    font-weight: 500;
+    padding: 3px 8px;
+    border-radius: 10px;
+    z-index: 2;
+  }
+
+  .genre-dot {
+    position: absolute;
+    top: 10px; left: 10px;
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    z-index: 2;
+  }
+
+  .card-body {
+    padding: 1rem 1.1rem 0.9rem;
+  }
+
+  .card-title {
+    font-family: 'Noto Serif KR', serif;
+    font-size: 0.95rem;
+    font-weight: 600;
+    line-height: 1.4;
+    margin-bottom: 2px;
+    color: var(--text-primary);
+  }
+
+  .card-author {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+  }
+
+  .card-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+
+
+
+
+  .card-date {
+    font-size: 0.68rem;
+    color: var(--text-muted);
+    margin-left: auto;
+  }
+
+  .card-memo {
+    font-size: 0.77rem;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .genre-tag {
+    display: inline-block;
+    font-size: 0.65rem;
+    padding: 2px 8px;
+    border-radius: 10px;
+    margin-top: 8px;
+    font-weight: 500;
+  }
+
+  /* 모달 */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(20,18,15,0.55);
+    z-index: 200;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem;
+  }
+
+  .modal-overlay.open { display: flex; }
+
+  .modal {
+    background: var(--surface);
+    border-radius: var(--radius);
+    width: 100%;
+    max-width: 560px;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+
+  .modal-header {
+    padding: 1.5rem 1.75rem 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+  }
+
+  .modal-title {
+    font-family: 'Noto Serif KR', serif;
+    font-size: 1.15rem;
+    font-weight: 600;
+  }
+
+  .modal-close {
+    background: none;
+    border: none;
+    font-size: 1.3rem;
+    color: var(--text-muted);
+    cursor: pointer;
+    line-height: 1;
+    padding: 2px 4px;
+  }
+
+  .modal-body {
+    padding: 1.25rem 1.75rem 1.75rem;
+  }
+
+  .field-group { margin-bottom: 1rem; }
+
+  .field-label {
+    font-size: 0.72rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    margin-bottom: 5px;
+    display: block;
+  }
+
+  .field-input, .field-textarea, .field-select {
+    font-family: 'Noto Sans KR', sans-serif;
+    font-size: 0.82rem;
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-sm);
+    background: var(--bg);
+    color: var(--text-primary);
+    outline: none;
+    transition: border-color 0.15s;
+  }
+
+  .field-input:focus, .field-textarea:focus, .field-select:focus {
+    border-color: var(--accent);
+  }
+
+  .field-textarea {
+    resize: vertical;
+    min-height: 80px;
+    line-height: 1.6;
+  }
+
+  .field-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+  }
+
+
+
+
+  .checkbox-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .checkbox-row input { accent-color: var(--accent); width: 15px; height: 15px; cursor: pointer; }
+
+  .modal-actions {
+    display: flex;
+    gap: 0.6rem;
+    justify-content: flex-end;
+    margin-top: 1.25rem;
+  }
+
+  .btn-cancel, .btn-save, .btn-delete {
+    font-family: 'Noto Sans KR', sans-serif;
+    font-size: 0.78rem;
+    font-weight: 500;
+    padding: 7px 18px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .btn-cancel {
+    background: none;
+    border: 1px solid var(--border-strong);
+    color: var(--text-secondary);
+  }
+
+  .btn-cancel:hover { background: var(--bg); }
+
+  .btn-save {
+    background: var(--accent);
+    border: 1px solid var(--accent);
+    color: white;
+  }
+
+  .btn-save:hover { opacity: 0.88; }
+
+  .btn-delete {
+    background: none;
+    border: 1px solid #e07070;
+    color: #c05050;
+    margin-right: auto;
+  }
+
+  .btn-delete:hover { background: #fdf0f0; }
+
+  /* 상세 뷰 */
+  .detail-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(20,18,15,0.55);
+    z-index: 200;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem;
+  }
+
+  .detail-overlay.open { display: flex; }
+
+  .detail-modal {
+    background: var(--surface);
+    border-radius: var(--radius);
+    width: 100%;
+    max-width: 600px;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+
+  .detail-cover-strip {
+    width: 100%;
+    height: 120px;
+    display: flex;
+    align-items: center;
+    padding: 0 2rem;
+    border-radius: var(--radius) var(--radius) 0 0;
+    position: relative;
+  }
+
+  .detail-cover-strip h2 {
+    font-family: 'Noto Serif KR', serif;
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: white;
+    z-index: 1;
+    line-height: 1.4;
+  }
+
+  .detail-cover-strip p {
+    font-size: 0.78rem;
+    color: rgba(255,255,255,0.75);
+    margin-top: 4px;
+    z-index: 1;
+  }
+
+  .detail-overlay-dark {
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.3);
+    border-radius: var(--radius) var(--radius) 0 0;
+  }
+
+  .detail-close {
+    position: absolute;
+    top: 12px; right: 14px;
+    background: rgba(255,255,255,0.2);
+    border: none;
+    color: white;
+    font-size: 1.1rem;
+    cursor: pointer;
+    width: 30px; height: 30px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    z-index: 2;
+  }
+
+  .detail-body {
+    padding: 1.5rem 2rem 2rem;
+  }
+
+  .detail-row {
+    display: flex;
+    gap: 1.5rem;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .detail-item {}
+
+  .detail-item-label {
+    font-size: 0.68rem;
+    color: var(--text-muted);
+    margin-bottom: 2px;
+  }
+
+  .detail-item-value {
+    font-size: 0.85rem;
+    color: var(--text-primary);
+    font-weight: 500;
+  }
+
+  .detail-section {
+    margin-bottom: 1.25rem;
+  }
+
+  .detail-section-label {
+    font-size: 0.7rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 0.5rem;
+  }
+
+  .detail-text {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    line-height: 1.75;
+  }
+
+  .quote-block {
+    border-left: 3px solid var(--accent);
+    padding: 0.6rem 1rem;
+    background: var(--accent-light);
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+    line-height: 1.7;
+    font-style: italic;
+    white-space: pre-wrap;
+  }
+
+  .detail-edit-btn {
+    font-family: 'Noto Sans KR', sans-serif;
+    font-size: 0.75rem;
+    padding: 6px 16px;
+    border: 1px solid var(--border-strong);
+    border-radius: 20px;
+    background: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.15s;
+    margin-top: 0.5rem;
+  }
+
+  .detail-edit-btn:hover { background: var(--bg); }
+
+  .empty-state {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 4rem 2rem;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    line-height: 2;
+  }
+
+  .empty-state-icon { font-size: 2.5rem; margin-bottom: 0.75rem; }
+
+  /* Genre colors */
+  .genre-소설 { background: #E8EFFF; color: #3456A8; }
+  .genre-에세이 { background: #FFF0E6; color: #9B5A2A; }
+  .genre-인문 { background: #F0F8EC; color: #3A7A2C; }
+  .genre-자기계발 { background: #FFF5E8; color: #B87020; }
+  .genre-신앙 { background: var(--accent-light); color: var(--accent); }
+  .genre-시 { background: #F8ECF8; color: #8A3A8A; }
+  .genre-기타 { background: #F2F0ED; color: #6B6760; }
+
+  .cover-palette-0 { background: #3D5A3E; }
+  .cover-palette-1 { background: #5B4A3A; }
+  .cover-palette-2 { background: #3A4A6B; }
+  .cover-palette-3 { background: #6B3A3A; }
+  .cover-palette-4 { background: #4A5A6B; }
+  .cover-palette-5 { background: #6B5A3A; }
+  .cover-palette-6 { background: #3A5A5A; }
+
+  .dot-소설 { background: #3456A8; }
+  .dot-에세이 { background: #9B5A2A; }
+  .dot-인문 { background: #3A7A2C; }
+  .dot-자기계발 { background: #B87020; }
+  .dot-신앙 { background: var(--accent); }
+  .dot-시 { background: #8A3A8A; }
+  .dot-기타 { background: #6B6760; }
+
+  /* 모바일 */
+  @media (max-width: 600px) {
+    header {
+      padding: 1.25rem 1rem 1rem;
+      position: static;
+    }
+
+    .header-top { margin-bottom: 1rem; }
+
+    .site-title { font-size: 1.2rem; }
+
+    .stat-num { font-size: 1.1rem; }
+
+    .controls {
+      gap: 0.5rem;
+    }
+
+    .filter-group {
+      width: 100%;
+      overflow-x: auto;
+      flex-wrap: nowrap;
+      padding-bottom: 2px;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+    }
+    .filter-group::-webkit-scrollbar { display: none; }
+
+    .filter-btn { white-space: nowrap; flex-shrink: 0; }
+
+    .search-box { width: 100%; }
+
+    .add-btn { width: 100%; text-align: center; margin-left: 0; padding: 9px 16px; }
+
+    main { padding: 1rem; }
+
+    .grid {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 0.75rem;
+    }
+
+    .card-title { font-size: 0.85rem; }
+    .card-author { font-size: 0.68rem; }
+    .card-memo { font-size: 0.72rem; }
+
+    .modal-overlay,
+    .detail-overlay {
+      padding: 0;
+      align-items: flex-end;
+    }
+
+    .modal,
+    .detail-modal {
+      max-width: 100%;
+      max-height: 92vh;
+      border-radius: var(--radius) var(--radius) 0 0;
+    }
+
+    .modal-header { padding: 1.25rem 1.25rem 0; }
+    .modal-body { padding: 1rem 1.25rem 1.5rem; }
+
+    .field-row { grid-template-columns: 1fr; }
+
+    .detail-body { padding: 1.25rem 1.25rem 1.75rem; }
+
+    .detail-cover-strip { padding: 0 1.25rem; height: 100px; }
+    .detail-cover-strip h2 { font-size: 1.1rem; }
+
+    .modal-actions { flex-wrap: wrap; }
+    .btn-delete { width: 100%; text-align: center; }
+    .btn-cancel, .btn-save { flex: 1; text-align: center; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-top">
+    <div>
+      <div class="site-title">내 독서 아카이브</div>
+      <div class="site-subtitle">읽은 책들의 기록</div>
+    </div>
+    <div class="header-stats">
+      <div class="stat">
+        <div class="stat-num" id="total-count">0</div>
+        <div class="stat-label">읽은 책</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num" id="reread-count">0</div>
+        <div class="stat-label">다시 읽고 싶은</div>
+      </div>
+    </div>
+  </div>
+  <div class="controls">
+    <div class="filter-group" id="genre-filters">
+      <button class="filter-btn active" data-genre="all">전체</button>
+      <button class="filter-btn" data-genre="소설">소설</button>
+      <button class="filter-btn" data-genre="에세이">에세이</button>
+      <button class="filter-btn" data-genre="인문">인문</button>
+      <button class="filter-btn" data-genre="자기계발">자기계발</button>
+      <button class="filter-btn" data-genre="신앙">신앙</button>
+      <button class="filter-btn" data-genre="시">시</button>
+      <button class="filter-btn" data-genre="기타">기타</button>
+    </div>
+    <input class="search-box" type="text" placeholder="책 제목, 저자 검색…" id="search-input">
+    <button class="add-btn" id="add-btn">+ 책 추가</button>
+  </div>
+</header>
+
+<main>
+  <div class="grid" id="book-grid"></div>
+</main>
+
+<!-- 추가/수정 모달 -->
+<div class="modal-overlay" id="form-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-title-text">책 추가</div>
+      <button class="modal-close" id="modal-close-btn">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="field-group">
+        <label class="field-label">제목 *</label>
+        <input class="field-input" id="f-title" placeholder="책 제목">
+      </div>
+      <div class="field-row">
+        <div class="field-group">
+          <label class="field-label">저자</label>
+          <input class="field-input" id="f-author" placeholder="저자명">
+        </div>
+        <div class="field-group">
+          <label class="field-label">장르</label>
+          <select class="field-select" id="f-genre">
+            <option value="소설">소설</option>
+            <option value="에세이">에세이</option>
+            <option value="인문">인문</option>
+            <option value="자기계발">자기계발</option>
+            <option value="신앙">신앙</option>
+            <option value="시">시</option>
+            <option value="기타">기타</option>
+          </select>
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field-group">
+          <label class="field-label">읽기 시작한 날짜</label>
+          <input class="field-input" id="f-date-start" type="date">
+        </div>
+        <div class="field-group">
+          <label class="field-label">다 읽은 날짜</label>
+          <input class="field-input" id="f-date-end" type="date">
+        </div>
+      </div>
+      <div class="field-group">
+        <label class="field-label">줄거리 / 소감</label>
+        <textarea class="field-textarea" id="f-memo" placeholder="짧게 기록해두고 싶은 내용을 적어주세요"></textarea>
+      </div>
+      <div class="field-group">
+        <label class="field-label">인상 깊은 구절</label>
+        <textarea class="field-textarea" id="f-quote" placeholder="마음에 남은 문장이나 구절을 적어주세요"></textarea>
+      </div>
+      <div class="field-group">
+        <label class="checkbox-row">
+          <input type="checkbox" id="f-reread"> 다시 읽고 싶은 책
+        </label>
+      </div>
+      <div class="modal-actions">
+        <button class="btn-delete" id="btn-delete" style="display:none">삭제</button>
+        <button class="btn-cancel" id="btn-cancel">취소</button>
+        <button class="btn-save" id="btn-save">저장</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 상세 보기 모달 -->
+<div class="detail-overlay" id="detail-modal">
+  <div class="detail-modal">
+    <div class="detail-cover-strip" id="detail-strip">
+      <div class="detail-overlay-dark"></div>
+      <div style="z-index:1">
+        <h2 id="d-title"></h2>
+        <p id="d-author"></p>
+      </div>
+      <button class="detail-close" id="detail-close">✕</button>
+    </div>
+    <div class="detail-body">
+      <div class="detail-row" id="d-meta-row"></div>
+      <div class="detail-section" id="d-memo-sec">
+        <div class="detail-section-label">소감 · 줄거리</div>
+        <div class="detail-text" id="d-memo"></div>
+      </div>
+      <div class="detail-section" id="d-quote-sec">
+        <div class="detail-section-label">인상 깊은 구절</div>
+        <div class="quote-block" id="d-quote"></div>
+      </div>
+      <button class="detail-edit-btn" id="d-edit-btn">✏ 수정하기</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const STORAGE_KEY = 'book_archive_v1';
+let books = [];
+let editingId = null;
+let detailId = null;
+let selectedRating = 0;
+let currentGenre = 'all';
+
+const palettes = ['cover-palette-0','cover-palette-1','cover-palette-2','cover-palette-3','cover-palette-4','cover-palette-5','cover-palette-6'];
+
+function load() {
+  books = getSampleBooks();
+}
+
+function save() {}
+
+function getSampleBooks() {
+  return [
+    {id: 'b1', title: '채식주의자', author: '한강', genre: '소설', dateStart: '2024-10-05', dateEnd: '2024-10-18', memo: '인간의 폭력성과 그에 저항하는 몸의 언어를 섬세하게 그린 소설. 영혜의 선택이 오래 마음에 남았다.', quote: '나는 꿈을 꿨어. 내 몸 속에서 피 냄새가 났어.', reread: false, palette: 2},
+    {id: 'b2', title: '나는 나로 살기로 했다', author: '김수현', genre: '에세이', dateStart: '2024-11-01', dateEnd: '2024-11-10', memo: '자존감과 자기 긍정에 대한 가볍게 읽기 좋은 에세이. 익숙한 이야기지만 필요한 시기에 읽으면 위로가 된다.', quote: '나를 잃지 않으면서 너를 사랑하는 것, 그게 진짜 관계다.', reread: false, palette: 1},
+    {id: 'b3', title: '군주론', author: '마키아벨리', genre: '인문', dateStart: '2024-12-03', dateEnd: '2025-01-14', memo: '리더십과 권력에 대한 냉철한 분석. 500년이 지났지만 여전히 날카롭다. 밑줄을 수없이 그었다.', quote: '사람들은 두려워하는 자보다 사랑하는 자에게 상처를 덜 주려 한다.', reread: true, palette: 3},
+    {id: 'b4', title: '아몬드', author: '손원평', genre: '소설', dateStart: '2025-01-20', dateEnd: '2025-01-28', memo: '감정을 느끼지 못하는 소년의 이야기. 오히려 감정에 대해 더 깊이 생각하게 만들었다.', quote: '', reread: true, palette: 4},
+    {id: 'b5', title: '멈추면, 비로소 보이는 것들', author: '혜민 스님', genre: '신앙', dateStart: '2025-02-10', dateEnd: '2025-02-20', memo: '일상의 속도를 늦추고 본질을 바라보게 하는 글들. 짧은 문장들이지만 여운이 길다.', quote: '당신이 힘든 것은 당신이 나쁜 사람이어서가 아니라, 아직 자기 자신에게 충분히 따뜻하지 못해서입니다.', reread: true, palette: 0},
+    {id: 'b6', title: '어떻게 살 것인가', author: '유시민', genre: '인문', dateStart: '2025-03-01', dateEnd: '2025-03-22', memo: '삶의 방향을 찾고 싶을 때 읽기 좋은 책. 저자의 경험과 철학이 솔직하게 담겨 있다.', quote: '', reread: false, palette: 5},
+  ];
+}
+
+function uid() { return 'b' + Date.now() + Math.random().toString(36).slice(2,6); }
+
+
+function formatDate(d) {
+  if (!d) return '';
+  const [y, m, day] = d.split('-');
+  return `${y}.${m}.${day}`;
+}
+
+function renderGrid() {
+  const grid = document.getElementById('book-grid');
+  const search = document.getElementById('search-input').value.toLowerCase();
+  let filtered = books.filter(b => {
+    const genreMatch = currentGenre === 'all' || b.genre === currentGenre;
+    const searchMatch = !search || b.title.toLowerCase().includes(search) || (b.author||'').toLowerCase().includes(search);
+    return genreMatch && searchMatch;
+  });
+
+  document.getElementById('total-count').textContent = books.length;
+  document.getElementById('reread-count').textContent = books.filter(b => b.reread).length;
+
+  if (!filtered.length) {
+    grid.innerHTML = `<div class="empty-state"><div class="empty-state-icon">📚</div>아직 기록된 책이 없어요.<br>첫 번째 책을 추가해 보세요.</div>`;
+    return;
+  }
+
+  grid.innerHTML = filtered.map(b => {
+    const pal = palettes[b.palette !== undefined ? b.palette % palettes.length : 0];
+    return `
+    <div class="card" data-id="${b.id}">
+      <div class="card-cover ${pal}">
+        <div class="cover-overlay"></div>
+        ${b.reread ? '<span class="reread-badge">다시 읽고 싶어요</span>' : ''}
+        <span class="genre-dot dot-${b.genre}"></span>
+        <div class="cover-text">
+          ${b.title}
+          <div class="cover-author">${b.author || ''}</div>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="card-title">${b.title}</div>
+        <div class="card-author">${b.author || '저자 미기재'}</div>
+        <div class="card-meta">
+          <span class="card-date">${formatDate(b.dateEnd) || formatDate(b.dateStart) || ''}</span>
+        </div>
+        ${b.memo ? `<div class="card-memo">${b.memo}</div>` : ''}
+        <span class="genre-tag genre-${b.genre}">${b.genre}</span>
+      </div>
+    </div>`;
+  }).join('');
+
+  grid.querySelectorAll('.card').forEach(card => {
+    card.addEventListener('click', () => openDetail(card.dataset.id));
+  });
+}
+
+function openDetail(id) {
+  detailId = id;
+  const b = books.find(x => x.id === id);
+  if (!b) return;
+  const pal = palettes[b.palette !== undefined ? b.palette % palettes.length : 0];
+  const strip = document.getElementById('detail-strip');
+  strip.className = `detail-cover-strip ${pal}`;
+  document.getElementById('d-title').textContent = b.title;
+  document.getElementById('d-author').textContent = b.author || '';
+
+  const metaItems = [];
+  if (b.genre) metaItems.push(`<div class="detail-item"><div class="detail-item-label">장르</div><div class="detail-item-value">${b.genre}</div></div>`);
+  if (b.dateStart || b.dateEnd) {
+    const period = [b.dateStart ? formatDate(b.dateStart) : '', b.dateEnd ? formatDate(b.dateEnd) : ''].filter(Boolean).join(' – ');
+    metaItems.push(`<div class="detail-item"><div class="detail-item-label">읽은 기간</div><div class="detail-item-value">${period}</div></div>`);
+  }
+  if (b.reread) metaItems.push(`<div class="detail-item"><div class="detail-item-label"> </div><div class="detail-item-value" style="color:var(--reread)">📌 다시 읽고 싶은 책</div></div>`);
+  document.getElementById('d-meta-row').innerHTML = metaItems.join('');
+
+  const memoSec = document.getElementById('d-memo-sec');
+  const memEl = document.getElementById('d-memo');
+  if (b.memo) { memEl.textContent = b.memo; memoSec.style.display = 'block'; }
+  else memoSec.style.display = 'none';
+
+  const quoteSec = document.getElementById('d-quote-sec');
+  const quoteEl = document.getElementById('d-quote');
+  if (b.quote) { quoteEl.textContent = b.quote; quoteSec.style.display = 'block'; }
+  else quoteSec.style.display = 'none';
+
+  document.getElementById('detail-modal').classList.add('open');
+}
+
+document.getElementById('detail-close').addEventListener('click', () => {
+  document.getElementById('detail-modal').classList.remove('open');
+});
+
+document.getElementById('d-edit-btn').addEventListener('click', () => {
+  document.getElementById('detail-modal').classList.remove('open');
+  openEditModal(detailId);
+});
+
+document.getElementById('detail-modal').addEventListener('click', e => {
+  if (e.target === document.getElementById('detail-modal')) {
+    document.getElementById('detail-modal').classList.remove('open');
+  }
+});
+
+function openAddModal() {
+  editingId = null;
+  document.getElementById('modal-title-text').textContent = '책 추가';
+  document.getElementById('btn-delete').style.display = 'none';
+  document.getElementById('f-title').value = '';
+  document.getElementById('f-author').value = '';
+  document.getElementById('f-genre').value = '소설';
+  document.getElementById('f-date-start').value = '';
+  document.getElementById('f-date-end').value = '';
+  document.getElementById('f-memo').value = '';
+  document.getElementById('f-quote').value = '';
+  document.getElementById('f-reread').checked = false;
+  document.getElementById('form-modal').classList.add('open');
+}
+
+function openEditModal(id) {
+  editingId = id;
+  const b = books.find(x => x.id === id);
+  if (!b) return;
+  document.getElementById('modal-title-text').textContent = '기록 수정';
+  document.getElementById('btn-delete').style.display = 'block';
+  document.getElementById('f-title').value = b.title;
+  document.getElementById('f-author').value = b.author || '';
+  document.getElementById('f-genre').value = b.genre || '기타';
+  document.getElementById('f-date-start').value = b.dateStart || '';
+  document.getElementById('f-date-end').value = b.dateEnd || '';
+  document.getElementById('f-memo').value = b.memo || '';
+  document.getElementById('f-quote').value = b.quote || '';
+  document.getElementById('f-reread').checked = !!b.reread;
+  document.getElementById('form-modal').classList.add('open');
+}
+
+
+function closeFormModal() {
+  document.getElementById('form-modal').classList.remove('open');
+}
+
+document.getElementById('modal-close-btn').addEventListener('click', closeFormModal);
+document.getElementById('btn-cancel').addEventListener('click', closeFormModal);
+document.getElementById('form-modal').addEventListener('click', e => {
+  if (e.target === document.getElementById('form-modal')) closeFormModal();
+});
+
+document.getElementById('add-btn').addEventListener('click', openAddModal);
+
+document.getElementById('btn-save').addEventListener('click', () => {
+  const title = document.getElementById('f-title').value.trim();
+  if (!title) { document.getElementById('f-title').focus(); return; }
+  const data = {
+    id: editingId || uid(),
+    title,
+    author: document.getElementById('f-author').value.trim(),
+    genre: document.getElementById('f-genre').value,
+    dateStart: document.getElementById('f-date-start').value,
+    dateEnd: document.getElementById('f-date-end').value,
+    memo: document.getElementById('f-memo').value.trim(),
+    quote: document.getElementById('f-quote').value.trim(),
+    reread: document.getElementById('f-reread').checked,
+    palette: editingId ? (books.find(b => b.id === editingId)?.palette ?? Math.floor(Math.random() * palettes.length)) : Math.floor(Math.random() * palettes.length)
+  };
+  if (editingId) {
+    books = books.map(b => b.id === editingId ? data : b);
+  } else {
+    books.push(data);
+  }
+  save();
+  renderGrid();
+  closeFormModal();
+});
+
+document.getElementById('btn-delete').addEventListener('click', () => {
+  if (!editingId) return;
+  if (confirm('이 책 기록을 삭제할까요?')) {
+    books = books.filter(b => b.id !== editingId);
+    save();
+    renderGrid();
+    closeFormModal();
+  }
+});
+
+document.getElementById('genre-filters').addEventListener('click', e => {
+  const btn = e.target.closest('.filter-btn');
+  if (!btn) return;
+  currentGenre = btn.dataset.genre;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderGrid();
+});
+
+document.getElementById('search-input').addEventListener('input', renderGrid);
+
+load();
+renderGrid();
+</script>
+</body>
+</html>
